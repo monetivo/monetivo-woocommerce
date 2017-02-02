@@ -174,22 +174,22 @@ class ApiRequest {
      * @throws \Monetivo\Exceptions\MonetivoException
      **/
     public function call($method, $url, array $vars = array()) {
+
         // initiate request, pass options
         $this->request = curl_init();
         $this->setOptions($this->options);
 
         // enable logging to file
         if(!empty($this->log_file)) {
-            $f = fopen($this->log_file, 'a');
-            curl_setopt($this->request, CURLOPT_VERBOSE, true);
-            curl_setopt($this->request, CURLOPT_STDERR, $f);
+            $f = @fopen($this->log_file, 'a');
+            @curl_setopt($this->request, CURLOPT_VERBOSE, true);
+            @curl_setopt($this->request, CURLOPT_STDERR, $f);
         }
 
         // if the base uri was included in options, treat url as a relative url
         if(!empty($this->base_uri)) {
             $url = $this->base_uri.$url;
         }
-
         curl_setopt($this->request, CURLOPT_URL, $url);
 
         // set additional headers

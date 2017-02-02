@@ -10,7 +10,7 @@
  * Description: Bramka płatności Monetivo do WooCommerce.
  * Author: Monetivo
  * Author URI: https://monetivo.com
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 
 if (!defined( 'ABSPATH')) {
@@ -30,7 +30,7 @@ function activate_monetivo_woocommerce()
         if ( ! is_plugin_active('woocommerce/woocommerce.php'))
         {
             deactivate_plugins(plugin_basename(__FILE__));
-            wp_die( 'Wtyczka wymaga instalacji oraz aktywacji Woocommerce', 'Monetivo', ['back_link' => true] );
+            wp_die( 'Wtyczka Monetivo wymaga instalacji oraz aktywacji Woocommerce.', 'Monetivo', ['back_link' => true] );
             return;
         }
 
@@ -52,7 +52,7 @@ function activate_monetivo_woocommerce()
  */
 function uninstall_monetivo_woocommerce() {
     delete_option('woocommerce_monetivo_settings');
-    delete_transient('mvo_auth_token');
+    delete_transient('mvo_wc_auth_token');
     wp_cache_flush();
 }
 

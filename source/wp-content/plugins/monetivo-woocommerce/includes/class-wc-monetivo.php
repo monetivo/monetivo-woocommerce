@@ -10,7 +10,7 @@ class WC_Monetivo extends WC_Payment_Gateway
     protected $woocommerce;
 
     protected $suported_currencies = array('PLN');
-    private $plugin_version = '1.0.0';
+    private $plugin_version = '1.0.1';
     private $token_cache = 60 * 4;
 
     public function __construct()
@@ -24,20 +24,32 @@ class WC_Monetivo extends WC_Payment_Gateway
         $this->has_fields = true;
 
         $this->method_title = __( 'Monetivo', 'woocommerce' );
+        $this->configuration_page = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=' . $this->id );
 
-        // Load the settings.
+        // load the settings.
         $this->init_settings();
 
-        // Define user set variables
+        // define user set variables
         $this->title = (isset( $this->settings['title'] ) ? $this->settings['title'] : '');
         $this->description = (isset( $this->settings['description'] )) ? $this->settings['description'] : 'Zapłać przez Monetivo';
         $this->app_token = (isset( $this->settings['mvo_app_token'] ) ? $this->settings['mvo_app_token'] : '');
-        $this->pos_id = (isset( $this->settings['mvo_pos_id'] ) ? $this->settings['mvo_pos_id'] : '');
         $this->login = (isset( $this->settings['mvo_login'] ) ? $this->settings['mvo_login'] : '');
         $this->password = (isset( $this->settings['mvo_password'] ) ? $this->settings['mvo_password'] : '');
 
-        // Setup admin options
+        // setup admin options
         $this->init_form_fields();
+
+        // display notice if plugin was not configured at all
+        if ( empty( $this->app_token ) || empty( $this->login ) || empty( $this->password ) ) {
+            $this->add_admin_notice( 'Wtyczka Monetivo dla WooCommerce nie jest poprawnie skonfigurowana. <a href="' . $this->configuration_page . '">Przejdź do konfiguracji</a>' );
+        }
+
+        // display notice for the admin if plugin was configured using testing credentials
+        if ( $this->enabled == 'yes' && ! empty( $this->login ) && ! empty( $this->password ) && false !== strpos( $this->app_token, 'test' ) ) {
+            $this->add_admin_notice( 'Wtyczka Monetivo dla WooCommerce została skonfigurowana w trybie testowym! Pamiętaj o zmianie danych logowania by móc przyjmować rzeczywiste płatności. Zmian możesz dokonać <a href="' . $this->configuration_page . '">tutaj</a>' );
+        }
+
+        // handle settings validation/update
         if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) ) {
             add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options') );
         } else {
@@ -68,7 +80,7 @@ class WC_Monetivo extends WC_Payment_Gateway
         }
 
         // check if required settings are saved
-        if ( empty( $this->app_token ) || empty( $this->pos_id ) || empty( $this->login ) || empty( $this->password ) ) {
+        if ( empty( $this->app_token ) || empty( $this->login ) || empty( $this->password ) ) {
             unset( $gateway_list['monetivo'] );
         }
 
@@ -76,12 +88,26 @@ class WC_Monetivo extends WC_Payment_Gateway
     }
 
     /** Initialize API client
+     * @param null $app_token
+     * @param null $login
+     * @param null $password
      * @return \Monetivo\MerchantApi
      * @throws \Monetivo\Exceptions\MonetivoException
      */
-    private function init_api_client()
+    public function init_api_client( $app_token = null, $login = null, $password = null )
     {
-        $client = new Monetivo\MerchantApi( $this->get_option( 'mvo_app_token' ) );
+        // fill default settings
+        if ( empty( $app_token ) ) {
+            $app_token = $this->get_option( 'mvo_app_token' );
+        }
+        if ( empty( $login ) ) {
+            $login = $this->get_option( 'mvo_login' );
+        }
+        if ( empty( $password ) ) {
+            $password = $this->get_option( 'mvo_password' );
+        }
+
+        $client = new Monetivo\MerchantApi( $app_token );
         // set platform name with format: woocommerce-<WP_version>-<WC_version>-<Plugin_version>
         $client->setPlatform( sprintf( 'monetivo-woocommerce-%s-%s-%s', get_bloginfo( 'version' ), WOOCOMMERCE_VERSION, $this->plugin_version ) );
 
@@ -91,7 +117,7 @@ class WC_Monetivo extends WC_Payment_Gateway
             $client->setBaseAPIEndpoint( $custom_endpoint );
         }
 
-        // override API endpoint if sandbox mode was enabled as env variable
+        // override API endpoint if sandbox mode was enabled as env variable or test mode was enabled in settings
         $sandbox_mode = getenv( 'MONETIVO_API_SANDBOX' );
         if ( $sandbox_mode ) {
             $client->setSandboxMode();
@@ -103,9 +129,9 @@ class WC_Monetivo extends WC_Payment_Gateway
         }
 
         // authenticate and save auth_token in Transient API cache
-        if ( WP_DEBUG || false === ($auth_token = get_transient( 'mvo_auth_token' )) ) {
-            $auth_token = $client->auth( $this->get_option( 'mvo_login' ), $this->get_option( 'mvo_password' ) );
-            set_transient( 'mvo_auth_token', $auth_token, $this->token_cache );
+        if ( WP_DEBUG || false === ($auth_token = get_transient( 'mvo_wc_auth_token' )) ) {
+            $auth_token = $client->auth( $login, $password );
+            set_transient( 'mvo_wc_auth_token', $auth_token, $this->token_cache );
         }
         $client->setAuthToken( $auth_token );
 
@@ -121,17 +147,17 @@ class WC_Monetivo extends WC_Payment_Gateway
     }
 
     /**
-     * Validates admin settings adn display errors
+     * Validates admin settings and display errors
      */
     public function process_admin_options()
     {
-        parent::process_admin_options();
         if ( version_compare( WOOCOMMERCE_VERSION, '2.6.4', '>=' ) ) {
             $this->validate_settings_fields();
             if ( ! empty( $this->errors ) ) {
                 $this->display_errors();
             }
         }
+        parent::process_admin_options();
     }
 
     /**
@@ -155,20 +181,16 @@ class WC_Monetivo extends WC_Payment_Gateway
         }
 
         $prefix = $this->plugin_id . $this->id . '_';
+        $settings_fields = array('mvo_app_token', 'mvo_login', 'mvo_password');
 
         // sanitizing fields
-
-        foreach (array('mvo_app_token', 'mvo_login', 'mvo_password', 'mvo_pos_id') as $field) {
+        foreach ($settings_fields as $field) {
             if ( isset( $_POST[$prefix . $field] ) ) {
-                $_POST[$prefix . $field] = trim( sanitize_text_field( $_POST[$prefix . $field] ) );
+                $_POST[$prefix . $field] = sanitize_text_field( $_POST[$prefix . $field] ) ;
             }
         }
 
         // checking required settings
-
-        if ( empty( $_POST[$prefix . 'mvo_pos_id'] ) ) {
-            $this->errors['mvo_pos_id'] = 'POS_ID jest wymagany';
-        }
 
         if ( empty( $_POST[$prefix . 'mvo_app_token'] ) ) {
             $this->errors['mvo_app_token'] = 'Token aplikacji jest wymagany';
@@ -182,23 +204,37 @@ class WC_Monetivo extends WC_Payment_Gateway
             $this->errors['mvo_password'] = 'Hasło użytkownika jest wymagane';
         }
 
-        if ( ! empty( $this->errors ) )
+        if ( ! empty( $this->errors ) ) {
+            // disable gateway
+            update_option( $prefix . 'enabled', 'no' );
+            unset( $_POST[$prefix . 'enabled'] );
             return;
+        }
 
-        // trying to establish connection to API with provided settings
+        // clear auth token
+        delete_transient( 'mvo_wc_auth_token' );
+
+        // trying to establish connection to API with provided settings; we are trying to makes sure that the gateway is configured properly - if not it is automatically disabled
         try {
-            $client = $this->init_api_client();
+            $client = $this->init_api_client( $_POST[$prefix . 'mvo_app_token'], $_POST[$prefix . 'mvo_login'], $_POST[$prefix . 'mvo_password'] );
             $client->call( 'get', 'auth/check_token' );
         } catch ( \Monetivo\Exceptions\MonetivoException $exception ) {
             $this->write_log( $exception );
             if ( $exception->getHttpCode() === 401 ) {
-                $this->errors['mvo_app_token'] = 'Dane logowania są nieprawidłowe';
+                $this->errors['mvo_wc_app_token'] = 'Dane logowania są nieprawidłowe';
             } else {
-                $this->errors['mvo_app_token'] = 'Wystąpił błąd połączenia (' . $exception->getHttpCode() . ')';
+                $this->errors['mvo_wc_app_token'] = 'Wystąpił błąd połączenia (' . $exception->getHttpCode() . ')';
             }
+
+            // disable gateway
+            update_option( $prefix . 'enabled', 'no' );
+            unset( $_POST[$prefix . 'enabled'] );
         } catch ( Exception $exception ) {
             $this->write_log( $exception );
-            $this->errors['mvo_app_token'] = 'Wystąpił błąd';
+            $this->errors['mvo_wc_app_token'] = 'Wystąpił błąd';
+            // disable gateway
+            update_option( $prefix . 'enabled', 'no' );
+            unset( $_POST[$prefix . 'enabled'] );
         }
     }
 
@@ -225,7 +261,6 @@ class WC_Monetivo extends WC_Payment_Gateway
             $this->generate_settings_html();
             echo '</table>';
         }
-
     }
 
     /**
@@ -288,7 +323,7 @@ class WC_Monetivo extends WC_Payment_Gateway
         $amount = str_replace( ',', '.', $order->get_total() );
         $amount = number_format( $amount, 2, '.', '' );
 
-        $return_url = add_query_arg( array('wc-api' => 'Monetivo', 'order_id' => $order_id), home_url( '/' ) );
+        $return_url = add_query_arg( array('wc-api' => 'WC_Monetivo', 'order_id' => $order_id), home_url( '/' ) );
         $notify_url = $return_url;
 
 
@@ -296,7 +331,6 @@ class WC_Monetivo extends WC_Payment_Gateway
         $desc = __( 'Zamówienie', 'monetivo' ) . ' #' . $order->get_order_number() . ', ' . $order->billing_first_name . ' ' . $order->billing_last_name . ', ' . date( 'Ymdhi' );
         $this->write_log( $notify_url );
         $params = array(
-            'pos_id' => $this->get_option( 'mvo_pos_id' ),
             'order_data' => [
                 'description' => $desc,
                 'order_id' => $order_id],
@@ -307,18 +341,18 @@ class WC_Monetivo extends WC_Payment_Gateway
             'currency' => strtoupper( $order->get_order_currency() ),
             'amount' => $amount,
             'return_url' => $return_url, // GET requests
-            'notify_url' => $notify_url // POST requests, handling callback
+            'notify_url' => $notify_url // POST requests, handling notification
         );
 
         try {
             // create transaction in Monetivo
             $transaction = $this->init_api_client()->transactions()->create( $params );
             // note the returned identifier; can be helpful in some situations
-            //$order->add_order_note('Monetivo transaction id: '. $transaction['identifier']);
+            $order->add_order_note('Monetivo transaction id: '. $transaction['identifier']);
         } catch ( Exception $exception ) {
             $this->write_log( $exception );
             // something went wrong
-            wc_add_notice( __( 'Payment error:', 'woocommerce' ), 'error' );
+            wc_add_notice( __( 'Wystąpił błąd, prosimy spróbować ponownie.', 'woocommerce' ), 'error' );
             $order->add_order_note( 'Payment failed' );
             return;
         }
@@ -334,14 +368,12 @@ class WC_Monetivo extends WC_Payment_Gateway
      */
     public function add_admin_notice( $message, $class = 'notice notice-error' )
     {
-        add_action( 'admin_init', function () use ( $class, $message ) {
-            $func = function () use ( $class, $message ) {
-                $message = __( $message, 'sample-text-domain' );
+        $func = function () use ( $class, $message ) {
+            $message = __( $message, 'sample-text-domain' );
 
-                printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message );
-            };
-            add_action( 'admin_notices', $func );
-        } );
+            printf( '<div class="%1$s"><p>%2$s</p></div>', $class, $message );
+        };
+        add_action( 'admin_notices', $func );
     }
 
     /** Adds notice
@@ -364,8 +396,9 @@ class WC_Monetivo extends WC_Payment_Gateway
      */
     public function write_log( $log )
     {
-        if ( ! WP_DEBUG )
+        if ( ! WP_DEBUG ) {
             return;
+        }
 
         if ( is_array( $log ) || is_object( $log ) ) {
             error_log( 'Monetivo: ' . print_r( $log, true ) );
