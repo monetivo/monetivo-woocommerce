@@ -301,7 +301,7 @@ class WC_Monetivo extends WC_Payment_Gateway
 
             } else {
                 $this->add_notice(
-                    __( 'Płatność realizowana przez Monetivo nie została jeszcze potwierdzona. Jeśli potwierdzenie nadejdzie w czasie późniejszym, płatność zostanie automatycznie przekazana do sklepu', 'monetivo' ),
+                    __( 'Dziękujemy za dokonanie zakupu. Twoje zamówienie zostanie zrealizowane po zaksięgowaniu płatności.', 'monetivo' ),
                     'notice'
                 );
 
