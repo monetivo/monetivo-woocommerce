@@ -24,7 +24,7 @@ Dodatkowo potrzebne są moduły PHP:
 2. „Wynikach wyszukiwania” pojawi się moduł płatności **monetivo**, który należy zainstalować.
 
 ### Ręczna
-1. [Pobierz archiwum ZIP](https://github.com/monetivo/monetivo-woocommerce/archive/master.zip) z wtyczką na dysk.
+1. [Pobierz archiwum ZIP](https://merchant.monetivo.com/download/monetivo-woocommerce.zip) z wtyczką na dysk.
 2. Przejdź do menu „Wtyczki" następnie „Dodaj nową" i skorzystaj z przycisku **Wyślij wtyczkę na serwer**
 3. Wybierz pobrane archiwum i kliknij **Zainstaluj teraz**
 
