@@ -1,0 +1,48 @@
+[
+    {
+        "name": "monetivo/monetivo-php",
+        "version": "1.0.12",
+        "version_normalized": "1.0.12.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/monetivo/monetivo-php.git",
+            "reference": "ff3dbf7e6824821de1174bbcbf8e1a02b885dfd2"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/monetivo/monetivo-php/zipball/ff3dbf7e6824821de1174bbcbf8e1a02b885dfd2",
+            "reference": "ff3dbf7e6824821de1174bbcbf8e1a02b885dfd2",
+            "shasum": ""
+        },
+        "require": {
+            "ext-curl": "*",
+            "php": ">=5.5"
+        },
+        "require-dev": {
+            "phpunit/phpunit": "5.5.*"
+        },
+        "time": "2017-03-31T11:29:21+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "Monetivo\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Grzegorz Agaciński",
+                "email": "gagacinski@monetivo.com"
+            },
+            {
+                "name": "Jakub Jasiulewicz",
+                "email": "jjasiulewicz@monetivo.com"
+            }
+        ],
+        "description": "Monetivo MerchantApi PHP client"
+    }
+]

@@ -1,0 +1,8 @@
+{
+  "config": {
+    "vendor-dir": "includes"
+  },
+  "require": {
+    "monetivo/monetivo-php": "^1.0"
+  }
+}
