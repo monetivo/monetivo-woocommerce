@@ -1,14 +1,13 @@
 <?php
 /**
- * /**
- * Monetivo Woocommerce payment module
  *
- * @author Monetivo
+ * monetivo Woocommerce payment module
  *
- * Plugin Name: Monetivo Woocommerce payment gateway
- * Plugin URI: https://monetivo.com
+ * @author monetivo
+ *
+ * Plugin Name: monetivo Woocommerce payment gateway
  * Description: Bramka płatności Monetivo do WooCommerce.
- * Author: Monetivo
+ * Author: monetivo
  * Author URI: https://monetivo.com
  * Version: 1.1.0
  */
