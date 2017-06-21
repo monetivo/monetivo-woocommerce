@@ -3,7 +3,7 @@
 ## Wstęp
 
 To repozytorium zawiera kod moduły płatności monetivo dla WooCommerce. 
-Aby zainstalować moduł skorzystaj z poniższej instrukcji lub zainstaluj plugin z oficjalnego katalogu Wordpress <url>.
+Aby zainstalować moduł skorzystaj z poniższej instrukcji lub zainstaluj plugin z [oficjalnego katalogu WordPress](https://wordpress.org/plugins/monetivo-woocommerce-payment-gateway/).
 Jeżeli jestes developerem i chciałbyś pomóc (super!) to serdecznie zapraszamy! 
 
 ## Wymagania i zależności
