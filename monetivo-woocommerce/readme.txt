@@ -4,7 +4,7 @@ Donate link: https://monetivo.com/
 Tags: woocommerce, payment, polska brama płatności, bramka płatności, płatności internetowe, płatności online
 Requires at least: 3.0.1
 Tested up to: 4.8
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: MIT
 
 Improve customer experience and conversions by accepting payments from polish banks directly on your WooCommerce site.
@@ -63,6 +63,9 @@ b)	Skopiuj cały folder do katalogu wp-content/plugins znajdującego się w Twoj
 * zmiana struktury katalogów repozytorium
 * zmiana kolejności pól w ustawieniach
 * dodanie wyboru kanału płatności w sklepie
+
+= 1.1.1 2017-09-21 =
+* ustawianie statusu na on-hold po przejściu do płatności
 
 == Frequently Asked Questions ==
 Feel free to contact us on hello@monetivo.com

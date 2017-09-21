@@ -56,6 +56,9 @@ Dodatkowo potrzebne są moduły PHP:
 - zmiana kolejności pól w ustawieniach
 - dodanie wyboru kanału płatności w sklepie
 
+1.1.1 2017-09-21
+- ustawianie statusu na on-hold po przejściu do płatności 
+
 ## Błędy
 
 Jeżeli znajdziesz jakieś błędy zgłoś je proszę przez GitHub. Zachęcamy również do zgłaszania pomysłów dotyczących ulepszenia naszych rozwiązań.

@@ -354,6 +354,10 @@ class WC_Monetivo extends WC_Payment_Gateway
             $transaction = $this->init_api_client()->transactions()->create( $params );
             // note the returned identifier; can be helpful in some situations
             $order->add_order_note('Wygenerowano transakcję: '. $transaction['identifier']);
+            // Mark as on-hold
+            $order->update_status('on-hold', __('Oczekiwanie na płatność monetivo', 'woocommerce'));
+            // Reduce stock levels
+            $order->reduce_order_stock();
         } catch ( Exception $exception ) {
             $this->write_log( $exception );
             // something went wrong

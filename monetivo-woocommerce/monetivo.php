@@ -9,7 +9,7 @@
  * Description: Bramka płatności Monetivo do WooCommerce.
  * Author: monetivo
  * Author URI: https://monetivo.com
- * Version: 1.1.0
+ * Version: 1.1.1
  */
 
 if (!defined( 'ABSPATH')) {
